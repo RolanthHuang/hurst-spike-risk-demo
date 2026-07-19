@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+results/
+.DS_Store
+
+# Production extracts must never be committed.
+data/private/
+data/raw/
+*.parquet
+

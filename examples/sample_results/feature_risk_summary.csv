@@ -1,0 +1,4 @@
+feature,feature_value,total_events,days_with_hurst,min_hurst,max_hurst,delta_hurst,passes_delta_threshold
+device_type,Emulator,1600,7,0.523830,0.755743,0.231913,true
+device_type,Mobile,1249,7,0.465171,0.605586,0.140415,false
+device_type,Browser,1545,7,0.529938,0.604758,0.074821,false

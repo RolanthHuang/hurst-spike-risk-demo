@@ -1,0 +1,19 @@
+{
+  "feature": "device_type",
+  "input_event_count": 4394,
+  "considered_feature_values": 3,
+  "risk_feature_values": 1,
+  "spike_windows": 17,
+  "captured_users": 17,
+  "parameters": {
+    "feature": "device_type",
+    "interval_seconds": 480,
+    "top_n_by_volume": 40,
+    "top_n_risk": 3,
+    "delta_threshold": 0.2,
+    "jump_ratio": 3.0,
+    "target_window": 25,
+    "min_events_per_day": 20,
+    "min_spike_count": 4
+  }
+}
