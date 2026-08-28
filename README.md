@@ -43,6 +43,15 @@ hurst-spike-demo \
 python -m hurst_spike_risk.cli --input data/sample_events.csv --output-dir results
 ```
 
+## 瀏覽器互動版
+
+兩個 HTML 都已內建固定種子的模擬事件，不需要安裝套件、啟動伺服器或載入 CSV，直接用瀏覽器開啟即可：
+
+- [`web/hurst-exponent-dashboard.html`](web/hurst-exponent-dashboard.html)：靜態分析版。可切換 `device_type` 與日期，查看 H、`D = 2 - H`、跨日 `ΔH`、spike 時窗與該時窗捕捉到的 UID。最下方會彙總所選設備類型七天內，捕捉次數最高的 UID。
+- [`web/hurst-spike-replay.html`](web/hurst-spike-replay.html)：動態掃描版。按 `Play` 後掃描線會沿時間序列前進；只有掃描線已經通過的 spike 與 UID 才會被計入。可暫停、重新開始、調整速度或拖曳時間軸，旁邊同步顯示逐步估計的 H，底部同步累積 UID 的捕捉時窗數與事件數。
+
+兩版都只在瀏覽器本機運算，沒有外部連線，也不含任何真實交易所資料。重新整理頁面會恢復同一份 deterministic synthetic demo。
+
 重新產生同一份 deterministic 模擬資料：
 
 ```bash
@@ -154,6 +163,9 @@ git push -u origin main
 │   └── data_dictionary.md
 ├── examples/sample_results/     # synthetic demo 的參考輸出
 ├── scripts/generate_sample_data.py
+├── web/
+│   ├── hurst-exponent-dashboard.html # 靜態分析與七日 UID 彙總
+│   └── hurst-spike-replay.html        # 動態掃描與 UID 即時累積
 ├── src/hurst_spike_risk/
 │   ├── analysis.py
 │   ├── cli.py

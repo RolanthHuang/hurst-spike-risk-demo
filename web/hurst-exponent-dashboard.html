@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Hurst & Spike Risk Demo — Static</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: light-dark(#f5f7fa, #11151b);
+      --surface: light-dark(#ffffff, #1a2029);
+      --surface-2: light-dark(#eef3f8, #222b36);
+      --text: light-dark(#17212b, #eef3f8);
+      --muted: light-dark(#607080, #aab7c5);
+      --border: light-dark(#d7e0e8, #394554);
+      --grid: light-dark(#e2e8ee, #303a46);
+      --blue: light-dark(#3175b9, #72b6f4);
+      --blue-soft: light-dark(rgba(49,117,185,.13), rgba(114,182,244,.14));
+      --orange: light-dark(#d45d18, #ff9b5b);
+      --orange-soft: light-dark(rgba(212,93,24,.13), rgba(255,155,91,.14));
+      --shadow: light-dark(0 12px 32px rgba(27,48,70,.08), 0 12px 32px rgba(0,0,0,.18));
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, select, input { font: inherit; }
+    .app { width: min(1180px, calc(100% - 32px)); margin: 28px auto 44px; }
+    .hero { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 18px; }
+    .eyebrow { color: var(--orange); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    h1 { margin: 5px 0 6px; font-size: clamp(25px, 4vw, 39px); line-height: 1.1; letter-spacing: -.035em; }
+    h2, h3 { margin: 0; }
+    .hero p { margin: 0; color: var(--muted); }
+    .privacy { flex: 0 0 auto; padding: 8px 11px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 12px; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }
+    label.field { display: grid; gap: 5px; min-width: 180px; color: var(--muted); font-size: 12px; }
+    select, button, input[type="range"] { accent-color: var(--blue); }
+    select, button { min-height: 40px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); color: var(--text); padding: 8px 11px; }
+    button { cursor: pointer; font-weight: 650; }
+    button:hover { border-color: var(--blue); }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--blue-soft); outline-offset: 2px; }
+    .replay-controls { display: none; flex: 1 1 480px; flex-wrap: wrap; align-items: end; gap: 10px; }
+    body[data-mode="replay"] .replay-controls { display: flex; }
+    .primary { background: var(--blue); color: light-dark(#fff, #07131e); border-color: transparent; min-width: 92px; }
+    .scrubber { flex: 1 1 220px; display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
+    .scrubber input { width: 100%; min-height: 40px; }
+    .progress-label { min-width: 124px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 14px 0; }
+    .metric { padding: 13px 15px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+    .metric-label { color: var(--muted); font-size: 12px; }
+    .metric-value { display: block; margin-top: 2px; font-size: 26px; font-weight: 720; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+    .metric-context { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .progressive-metric { display: none; }
+    body[data-mode="replay"] .progressive-metric { display: block; }
+    body[data-mode="replay"] .dimension-metric { display: none; }
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 14px; align-items: stretch; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }
+    .chart-panel { padding: 15px; min-width: 0; }
+    .panel-head { display: flex; justify-content: space-between; gap: 14px; align-items: start; }
+    .panel-head h2 { font-size: 17px; }
+    .panel-head p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .legend { display: flex; flex-wrap: wrap; justify-content: end; gap: 10px; color: var(--muted); font-size: 11px; }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .legend i { width: 18px; height: 3px; background: var(--blue); border-radius: 4px; }
+    .legend i.spike { width: 9px; height: 9px; background: var(--orange); border-radius: 50%; }
+    .legend i.scan { width: 2px; height: 14px; background: var(--orange); }
+    .chart-wrap { position: relative; width: 100%; margin-top: 9px; }
+    svg { display: block; width: 100%; height: auto; min-height: 310px; }
+    .chart-frame { fill: var(--surface); stroke: var(--border); }
+    .grid-line { stroke: var(--grid); stroke-width: 1; }
+    .axis-text { fill: var(--muted); font-size: 11px; }
+    .axis-title { fill: var(--text); font-size: 12px; font-weight: 600; }
+    .full-line { fill: none; stroke: var(--blue); stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .future-line { fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .28; vector-effect: non-scaling-stroke; }
+    .area { fill: var(--blue-soft); }
+    .spike-hit { fill: transparent; cursor: pointer; }
+    .spike-dot { fill: var(--orange); stroke: var(--surface); stroke-width: 2; pointer-events: none; }
+    .spike-dot.selected { stroke: var(--text); stroke-width: 3; }
+    .scan-line { stroke: var(--orange); stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .scan-cap { fill: var(--orange); }
+    .spike-panel { padding: 16px; display: flex; flex-direction: column; }
+    .spike-panel h2 { font-size: 17px; }
+    .spike-summary { margin: 11px 0 13px; padding: 11px; background: var(--orange-soft); border-radius: 10px; }
+    .spike-time { font-size: 15px; font-weight: 700; }
+    .spike-meta { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .uid-list { display: grid; gap: 7px; margin-top: 9px; }
+    .uid-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: center; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
+    .uid-row code { overflow-wrap: anywhere; color: var(--text); }
+    .uid-count { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .empty { color: var(--muted); font-size: 13px; padding: 18px 0; }
+    .live-message { margin-top: auto; padding-top: 12px; color: var(--muted); font-size: 11px; }
+    .tables { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.35fr); gap: 14px; margin-top: 14px; }
+    .table-panel { padding: 15px; min-width: 0; }
+    .table-panel h2 { font-size: 17px; }
+    .scope { margin: 3px 0 10px; color: var(--muted); font-size: 12px; }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 9px 8px; border-top: 1px solid var(--border); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    th { color: var(--muted); font-size: 11px; font-weight: 650; }
+    th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+    tbody tr.active { background: var(--blue-soft); }
+    .rank { color: var(--muted); }
+    footer { padding: 16px 2px 0; color: var(--muted); font-size: 11px; }
+    @media (max-width: 850px) { .main-grid, .tables { grid-template-columns: 1fr; } .metrics { grid-template-columns: repeat(2, 1fr); } .spike-panel { min-height: 245px; } }
+    @media (max-width: 520px) { .app { width: min(100% - 18px, 1180px); margin-top: 12px; } .hero { align-items: start; flex-direction: column; gap: 10px; } .privacy { align-self: start; } .metrics { grid-template-columns: 1fr 1fr; gap: 8px; } .metric { padding: 10px; } .metric-value { font-size: 21px; } .panel-head { flex-direction: column; } .legend { justify-content: start; } svg { min-height: 250px; } }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body data-mode="static">
+  <main class="app" id="app">
+    <header class="hero">
+      <div><div class="eyebrow" id="eyebrow">Static analysis</div><h1 id="page-title">Hurst & Spike Risk Demo</h1><p id="page-subtitle">跨日 Hurst 變化、spike 時窗與 pseudonymous UID 累積排名</p></div>
+      <div class="privacy">Deterministic synthetic data · offline only</div>
+    </header>
+    <section class="toolbar" aria-label="Dashboard controls">
+      <label class="field">Device type<select id="device-select" aria-label="Select device type"></select></label>
+      <label class="field">Selected time series (UTC)<select id="day-select" aria-label="Select UTC day"></select></label>
+      <div class="replay-controls" id="replay-controls">
+        <button type="button" class="primary" id="play-button">Play</button><button type="button" id="restart-button">Restart</button>
+        <label class="field" style="min-width:105px">Speed<select id="speed-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label>
+        <label class="scrubber">Scan position<input id="scan-range" type="range" min="0" max="179" value="0" aria-label="Scan position"></label><span class="progress-label" id="progress-label">Bucket 0 / 180</span>
+      </div>
+    </section>
+    <section class="metrics" aria-label="Selected series metrics">
+      <div class="metric"><span class="metric-label">Final daily H</span><strong class="metric-value" id="final-h">—</strong><span class="metric-context">DFA estimate</span></div>
+      <div class="metric progressive-metric"><span class="metric-label">Progressive H</span><strong class="metric-value" id="progressive-h">—</strong><span class="metric-context" id="progressive-context">insufficient data</span></div>
+      <div class="metric dimension-metric"><span class="metric-label">Graph dimension D</span><strong class="metric-value" id="dimension">—</strong><span class="metric-context">D = 2 − H</span></div>
+      <div class="metric"><span class="metric-label">Cross-day ΔH</span><strong class="metric-value" id="delta-h">—</strong><span class="metric-context">max(H) − min(H)</span></div>
+      <div class="metric"><span class="metric-label">Detected spike windows</span><strong class="metric-value" id="spike-count">—</strong><span class="metric-context" id="spike-context">selected day</span></div>
+    </section>
+    <section class="main-grid">
+      <div class="panel chart-panel">
+        <div class="panel-head"><div><h2>Selected time series</h2><p id="series-caption"></p></div><div class="legend"><span><i></i>Event count</span><span><i class="spike"></i>Captured spike</span><span id="scan-legend"><i class="scan"></i>Scan line</span></div></div>
+        <div class="chart-wrap"><svg id="chart" role="img" aria-label="Time series with detected spike windows"></svg></div>
+      </div>
+      <aside class="panel spike-panel" aria-live="polite"><h2>Selected spike</h2><div id="spike-detail"></div><div class="live-message" id="live-message">Select an orange point to inspect its UID composition.</div></aside>
+    </section>
+    <section class="tables">
+      <div class="panel table-panel"><h2>Hurst exponent by day</h2><p class="scope" id="hurst-scope"></p><div class="table-scroll"><table><thead><tr><th>UTC day</th><th>Events</th><th>H</th><th>D = 2 − H</th><th>Spikes</th></tr></thead><tbody id="hurst-body"></tbody></table></div></div>
+      <div class="panel table-panel"><h2>Top captured UID</h2><p class="scope" id="uid-scope"></p><div class="table-scroll"><table><thead><tr><th>Rank</th><th>UID</th><th>Spike windows</th><th>Spike events</th><th>Last capture (UTC)</th></tr></thead><tbody id="uid-body"></tbody></table></div></div>
+    </section>
+    <footer>No production identifiers are included. “Spike windows” counts a UID once per captured bucket; “Spike events” counts all of that UID’s events inside captured buckets.</footer>
+  </main>
+  <script>
+  (() => {
+    const MODE = "static";
+    const BUCKET_SECONDS = 480, BUCKETS = 180, JUMP_RATIO = 3, TARGET_WINDOW = 25, MIN_SPIKE_COUNT = 8;
+    const BENIGN_UIDS = Array.from({length: 40}, (_, index) => `demo_user_${String(index + 1).padStart(3, "0")}`);
+    const SUSPECT_UIDS = ["demo_suspect_a", "demo_suspect_b", "demo_suspect_c"];
+    document.body.dataset.mode = MODE;
+    const $ = id => document.getElementById(id);
+    const ui = {device: $("device-select"), day: $("day-select"), play: $("play-button"), restart: $("restart-button"), speed: $("speed-select"), range: $("scan-range"), progress: $("progress-label"), chart: $("chart"), finalH: $("final-h"), progressiveH: $("progressive-h"), progressiveContext: $("progressive-context"), dimension: $("dimension"), deltaH: $("delta-h"), spikeCount: $("spike-count"), spikeContext: $("spike-context"), caption: $("series-caption"), detail: $("spike-detail"), live: $("live-message"), hurstScope: $("hurst-scope"), hurstBody: $("hurst-body"), uidScope: $("uid-scope"), uidBody: $("uid-body"), scanLegend: $("scan-legend")};
+    function seededRandom(seed) { return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
+    const random = seededRandom(20260828);
+    function poisson(lambda) { const limit = Math.exp(-lambda); let product = 1, count = 0; do { count += 1; product *= random(); } while (product > limit); return count - 1; }
+    function addEvents(bucket, uid, count) { bucket.count += count; bucket.uids[uid] = (bucket.uids[uid] || 0) + count; }
+    function createDay(device, dayIndex) {
+      const buckets = Array.from({length: BUCKETS}, () => ({count: 0, uids: Object.create(null)}));
+      for (let index = 0; index < BUCKETS; index += 1) {
+        let lambda = device === "Browser" ? 1.25 : device === "Mobile" ? 1.0 : 0.72;
+        if (device === "Emulator" && dayIndex >= 3) lambda = 0.35 + 1.5 * (Math.sin(index / BUCKETS * 3 * Math.PI) + 1) / 2;
+        const baseCount = poisson(lambda);
+        for (let event = 0; event < baseCount; event += 1) addEvents(buckets[index], BENIGN_UIDS[Math.floor(random() * BENIGN_UIDS.length)], 1);
+      }
+      if (device === "Emulator" && dayIndex >= 3) [44, 96, 142].forEach((index, ordinal) => { addEvents(buckets[index], SUSPECT_UIDS[0], 8 + dayIndex + ordinal); addEvents(buckets[index], SUSPECT_UIDS[1], 6 + Math.floor(dayIndex / 2)); addEvents(buckets[index], SUSPECT_UIDS[2], 4 + ordinal); });
+      return {day: `2026-01-${String(dayIndex + 1).padStart(2, "0")}`, buckets, counts: buckets.map(bucket => bucket.count)};
+    }
+    function createDataset() { const result = {}; ["Browser", "Mobile", "Emulator"].forEach(device => { result[device] = Array.from({length: 7}, (_, dayIndex) => createDay(device, dayIndex)); }); return result; }
+    function regression(xs, ys) { const xm = average(xs), ym = average(ys); let numerator = 0, denominator = 0; xs.forEach((x, index) => { numerator += (x - xm) * (ys[index] - ym); denominator += (x - xm) ** 2; }); return denominator ? numerator / denominator : NaN; }
+    function average(values) { return values.reduce((sum, value) => sum + value, 0) / values.length; }
+    function hurstDfa(values) {
+      if (values.length < 16 || values.every(value => value === values[0])) return NaN;
+      const mean = average(values), profile = []; let running = 0; values.forEach(value => { running += value - mean; profile.push(running); });
+      const upper = Math.floor(values.length / 4); if (upper <= 4) return NaN;
+      const scales = [...new Set(Array.from({length: 10}, (_, index) => Math.floor(4 * Math.pow(upper / 4, index / 9))))].filter(scale => scale >= 4 && scale <= upper), logS = [], logF = [];
+      scales.forEach(scale => { const count = Math.floor(values.length / scale); if (count < 2) return; const variances = []; for (let segment = 0; segment < count; segment += 1) { const current = profile.slice(segment * scale, (segment + 1) * scale), times = current.map((_, index) => index), slope = regression(times, current), intercept = average(current.map((value, index) => value - slope * index)); variances.push(average(current.map((value, index) => (value - (slope * index + intercept)) ** 2))); } const fluctuation = Math.sqrt(average(variances)); if (fluctuation > 0 && Number.isFinite(fluctuation)) { logS.push(Math.log(scale)); logF.push(Math.log(fluctuation)); } });
+      return logS.length >= 3 ? regression(logS, logF) : NaN;
+    }
+    function squaredLoss(values, center) { return values.length ? average(values.map(value => (value - center) ** 2)) : 0; }
+    function recursiveBaseline(history) {
+      const values = history.slice(-TARGET_WINDOW).filter(Number.isFinite); if (!values.length) return 0; if (values.length < 6 || values.every(value => value === values[0])) return average(values); const originalSize = values.length;
+      function recurse(current, depth) { if (current.length < 6 || depth >= 20) return average(current); const ordered = [...current].sort((a, b) => a - b), minimum = ordered[0], maximum = ordered.at(-1), core = ordered.slice(1, -1); if (core.length < 3) return average(current); const center = average(current); let best = null; for (let first = 1; first < core.length - 1; first += 1) for (let second = first + 1; second < core.length; second += 1) { const loss = squaredLoss(core.slice(0, first), minimum) + squaredLoss(core.slice(first, second), center) + squaredLoss(core.slice(second), maximum); if (!best || loss < best.loss) best = {loss, first, second}; } if (!best) return center; const regimes = [[minimum, ...core.slice(0, best.first)], core.slice(best.first, best.second), [...core.slice(best.second), maximum]], upperTail = [...regimes[1], ...regimes[2]]; if (upperTail.length > 5 && upperTail.length / originalSize > .1 && upperTail.length < current.length) return recurse(upperTail, depth + 1); regimes.sort((a, b) => b.length - a.length || average(b) - average(a)); return average(regimes[0]); }
+      return recurse(values, 0);
+    }
+    function detectSpikes(counts) { const spikes = []; counts.forEach((count, index) => { if (index < 5) return; const baseline = recursiveBaseline(counts.slice(Math.max(0, index - TARGET_WINDOW), index)); if (count >= MIN_SPIKE_COUNT && count > JUMP_RATIO * Math.max(baseline, 1)) spikes.push({index, count, baseline}); }); return spikes; }
+    function format(value) { return Number.isFinite(value) ? value.toFixed(4) : "—"; }
+    function pad(value) { return String(value).padStart(2, "0"); }
+    function bucketTime(index) { const seconds = Math.min(index, BUCKETS) * BUCKET_SECONDS; return `${pad(Math.floor(seconds / 3600))}:${pad(Math.floor((seconds % 3600) / 60))}`; }
+    function windowLabel(day, index) { return `${day} ${bucketTime(index)}–${bucketTime(index + 1)}`; }
+    const dataset = createDataset(); Object.values(dataset).flat().forEach(day => { day.h = hurstDfa(day.counts); day.spikes = detectSpikes(day.counts); });
+    const state = {device: "Emulator", dayIndex: 6, selectedSpike: null, cursor: MODE === "static" ? BUCKETS - 1 : 0, playing: false, timer: null};
+    function currentDay() { return dataset[state.device][state.dayIndex]; }
+    function visibleSpikes(day) { return MODE === "static" ? day.spikes : day.spikes.filter(spike => spike.index <= state.cursor); }
+    function cumulativeRows() { const rows = new Map(), days = MODE === "static" ? dataset[state.device] : [currentDay()]; days.forEach(day => day.spikes.forEach(spike => { if (MODE === "replay" && spike.index > state.cursor) return; Object.entries(day.buckets[spike.index].uids).forEach(([uid, count]) => { if (!rows.has(uid)) rows.set(uid, {uid, windows: 0, events: 0, last: ""}); const row = rows.get(uid); row.windows += 1; row.events += count; row.last = `${day.day} ${bucketTime(spike.index)}`; }); })); return [...rows.values()].sort((a, b) => b.windows - a.windows || b.events - a.events || a.uid.localeCompare(b.uid)).slice(0, 10); }
+    function populateControls() { ui.device.replaceChildren(...Object.keys(dataset).map(device => { const option = new Option(device, device); return option; })); ui.device.value = state.device; updateDays(); if (MODE === "static") ui.scanLegend.hidden = true; else { $("eyebrow").textContent = "Animated replay"; $("page-subtitle").textContent = "掃描線依序處理時間桶，spike UID 與累積次數同步更新"; ui.scanLegend.hidden = false; } }
+    function updateDays() { ui.day.replaceChildren(...dataset[state.device].map((day, index) => new Option(day.day, String(index)))); ui.day.value = String(state.dayIndex); }
+    function stop() { if (state.timer) clearInterval(state.timer); state.timer = null; state.playing = false; ui.play.textContent = "Play"; }
+    function reset() { stop(); state.cursor = 0; state.selectedSpike = null; ui.range.value = "0"; render(); }
+    function toggle() { if (state.playing) return stop(); if (state.cursor >= BUCKETS - 1) state.cursor = 0; state.playing = true; ui.play.textContent = "Pause"; state.timer = setInterval(() => { const previous = state.cursor; state.cursor = Math.min(BUCKETS - 1, state.cursor + Number(ui.speed.value)); const crossed = currentDay().spikes.filter(spike => spike.index > previous && spike.index <= state.cursor); if (crossed.length) { state.selectedSpike = crossed.at(-1); ui.live.textContent = `${windowLabel(currentDay().day, state.selectedSpike.index)} captured ${Object.keys(currentDay().buckets[state.selectedSpike.index].uids).length} UID.`; } ui.range.value = String(state.cursor); render(); if (state.cursor >= BUCKETS - 1) stop(); }, 105); }
+    function renderMetrics() { const day = currentDay(), hs = dataset[state.device].map(item => item.h).filter(Number.isFinite), delta = hs.length > 1 ? Math.max(...hs) - Math.min(...hs) : NaN, progressive = MODE === "replay" ? hurstDfa(day.counts.slice(0, state.cursor + 1)) : day.h; ui.finalH.textContent = format(day.h); ui.dimension.textContent = format(2 - day.h); ui.deltaH.textContent = format(delta); ui.progressiveH.textContent = format(progressive); ui.progressiveContext.textContent = Number.isFinite(progressive) ? `using buckets 0–${state.cursor}` : "insufficient data"; ui.spikeCount.textContent = String(visibleSpikes(day).length); ui.spikeContext.textContent = MODE === "static" ? `${day.spikes.length} in selected day` : `${visibleSpikes(day).length} crossed / ${day.spikes.length} final`; ui.caption.textContent = `device_type = ${state.device} · ${day.day} · ${day.counts.reduce((sum, value) => sum + value, 0)} synthetic events`; ui.progress.textContent = `Bucket ${state.cursor + 1} / ${BUCKETS} · ${bucketTime(state.cursor)}`; }
+    function node(name, attributes = {}) { const element = document.createElementNS("http://www.w3.org/2000/svg", name); Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value))); return element; }
+    function renderChart() {
+      const day = currentDay(), svg = ui.chart; svg.replaceChildren(); const width = Math.max(620, Math.round(svg.getBoundingClientRect().width || 760)), height = width < 700 ? 330 : 370, margin = {left:58,right:22,top:24,bottom:48}, plotW = width - margin.left - margin.right, plotH = height - margin.top - margin.bottom, maxY = Math.max(4, ...day.counts), x = index => margin.left + index / (BUCKETS - 1) * plotW, y = value => margin.top + plotH - value / maxY * plotH; svg.setAttribute("viewBox", `0 0 ${width} ${height}`); const title = node("title"); title.textContent = `${day.day} event count for ${state.device}`; svg.append(title, node("rect", {x:margin.left,y:margin.top,width:plotW,height:plotH,class:"chart-frame"}));
+      for (let tick = 0; tick <= 4; tick += 1) { const value = maxY * tick / 4, ypos = y(value), text = node("text", {x:margin.left-9,y:ypos+4,"text-anchor":"end",class:"axis-text"}); text.textContent = String(Math.round(value)); svg.append(node("line", {x1:margin.left,x2:margin.left+plotW,y1:ypos,y2:ypos,class:"grid-line"}), text); }
+      [0,45,90,135,179].forEach(index => { const text = node("text", {x:x(index),y:margin.top+plotH+21,"text-anchor":index===0?"start":index===179?"end":"middle",class:"axis-text"}); text.textContent = bucketTime(index); svg.append(text); }); const yt = node("text", {x:15,y:margin.top+plotH/2,transform:`rotate(-90 15 ${margin.top+plotH/2})`,"text-anchor":"middle",class:"axis-title"}); yt.textContent = "Events per 8-minute bucket"; const xt = node("text", {x:margin.left+plotW/2,y:height-8,"text-anchor":"middle",class:"axis-title"}); xt.textContent = "UTC time"; svg.append(yt,xt);
+      const all = day.counts.map((value,index)=>`${x(index)},${y(value)}`).join(" "); if (MODE === "replay") svg.append(node("polyline", {points:all,class:"future-line"})); const end = MODE === "static" ? BUCKETS - 1 : state.cursor, active = day.counts.slice(0,end+1).map((value,index)=>`${x(index)},${y(value)}`).join(" "); if (end > 0) svg.append(node("polygon", {points:`${x(0)},${y(0)} ${active} ${x(end)},${y(0)}`,class:"area"}), node("polyline", {points:active,class:"full-line"}));
+      visibleSpikes(day).forEach(spike => { const group = node("g", {role:"button",tabindex:"0","aria-label":`Spike at ${bucketTime(spike.index)}, ${spike.count} events`}), select = () => { state.selectedSpike = spike; render(); }; group.addEventListener("click", select); group.addEventListener("keydown", event => { if (["Enter"," "].includes(event.key)) { event.preventDefault(); select(); } }); group.append(node("circle", {cx:x(spike.index),cy:y(spike.count),r:15,class:"spike-hit"}), node("circle", {cx:x(spike.index),cy:y(spike.count),r:state.selectedSpike?.index===spike.index?7:5,class:`spike-dot${state.selectedSpike?.index===spike.index?" selected":""}`})); svg.append(group); }); if (MODE === "replay") { const sx=x(state.cursor); svg.append(node("line", {x1:sx,x2:sx,y1:margin.top,y2:margin.top+plotH,class:"scan-line"}), node("circle", {cx:sx,cy:margin.top,r:4,class:"scan-cap"})); }
+    }
+    function renderDetail() { const day=currentDay(), spike=state.selectedSpike; ui.detail.replaceChildren(); if (!spike || (MODE==="replay" && spike.index>state.cursor)) { const empty=document.createElement("div"); empty.className="empty"; empty.textContent=MODE==="replay"?"掃描線尚未捕捉到 spike。":"Selected day has no captured spike."; ui.detail.append(empty); return; } const summary=document.createElement("div"); summary.className="spike-summary"; const time=document.createElement("div"); time.className="spike-time"; time.textContent=windowLabel(day.day,spike.index); const meta=document.createElement("div"); meta.className="spike-meta"; meta.textContent=`${spike.count} events · baseline ${spike.baseline.toFixed(2)} · ${(spike.count/Math.max(spike.baseline,1)).toFixed(1)}× baseline`; summary.append(time,meta); const heading=document.createElement("h3"); heading.textContent="UID captured in this window"; heading.style.fontSize="13px"; const list=document.createElement("div"); list.className="uid-list"; Object.entries(day.buckets[spike.index].uids).sort((a,b)=>b[1]-a[1]).forEach(([uid,count])=>{const row=document.createElement("div");row.className="uid-row";const code=document.createElement("code");code.textContent=uid;const value=document.createElement("span");value.className="uid-count";value.textContent=`${count} event${count===1?"":"s"}`;row.append(code,value);list.append(row);}); ui.detail.append(summary,heading,list); }
+    function renderHurst() { ui.hurstBody.replaceChildren(); ui.hurstScope.textContent=`device_type = ${state.device} · seven synthetic UTC days`; dataset[state.device].forEach((day,index)=>{const row=document.createElement("tr");if(index===state.dayIndex)row.className="active";[day.day,String(day.counts.reduce((a,b)=>a+b,0)),format(day.h),format(2-day.h),String(day.spikes.length)].forEach(value=>{const cell=document.createElement("td");cell.textContent=value;row.append(cell);});row.addEventListener("click",()=>{state.dayIndex=index;ui.day.value=String(index);state.selectedSpike=null;if(MODE==="replay")reset();else render();});ui.hurstBody.append(row);}); }
+    function renderUids() { const rows=cumulativeRows();ui.uidBody.replaceChildren();ui.uidScope.textContent=MODE==="static"?`device_type = ${state.device} · all seven days · Top 10`:`${state.device} · ${currentDay().day} · through ${bucketTime(state.cursor)} · Top 10`;if(!rows.length){const row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=5;cell.className="empty";cell.textContent="No UID captured yet.";row.append(cell);ui.uidBody.append(row);return;}rows.forEach((item,index)=>{const row=document.createElement("tr");[String(index+1),item.uid,String(item.windows),String(item.events),item.last].forEach((value,i)=>{const cell=document.createElement("td");cell.textContent=value;if(i===0)cell.className="rank";row.append(cell);});ui.uidBody.append(row);}); }
+    function render(){renderMetrics();renderChart();renderDetail();renderHurst();renderUids();}
+    ui.device.addEventListener("change",()=>{state.device=ui.device.value;state.dayIndex=state.device==="Emulator"?6:0;state.selectedSpike=null;updateDays();if(MODE==="replay")reset();else render();});ui.day.addEventListener("change",()=>{state.dayIndex=Number(ui.day.value);state.selectedSpike=null;if(MODE==="replay")reset();else render();});ui.play.addEventListener("click",toggle);ui.restart.addEventListener("click",reset);ui.range.addEventListener("input",()=>{stop();state.cursor=Number(ui.range.value);const crossed=currentDay().spikes.filter(spike=>spike.index<=state.cursor);state.selectedSpike=crossed.at(-1)||null;render();});window.addEventListener("resize",()=>{clearTimeout(window.__hurstResize);window.__hurstResize=setTimeout(renderChart,80);});
+    populateControls();if(MODE==="static")state.selectedSpike=currentDay().spikes.at(-1)||null;render();
+  })();
+  </script>
+</body>
+</html>
