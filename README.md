@@ -1,5 +1,12 @@
 # Cross-day Hurst Change & Spike Capture Demo
 
+## 線上展示｜直接開啟
+
+- [靜態分析儀表板](https://rolanthhuang.github.io/hurst-spike-risk-demo/web/hurst-exponent-dashboard.html)
+- [動態掃描與回放](https://rolanthhuang.github.io/hurst-spike-risk-demo/web/hurst-spike-replay.html)
+
+不需下載或安裝，點擊上方連結即可在瀏覽器使用。
+
 這是一個**完全使用模擬資料**的研究型 demo：先把登入／設備事件依指定特徵（`device_type`、`device_id` 或 `ip`）切成每日時間序列，計算每日 Hurst exponent，再用跨日的 `ΔH = max(H) - min(H)` 排出結構變化較大的特徵值，最後從候選特徵的突然突峰時窗中找出相關的 pseudonymous user ID。
 
 > 本專案是風險訊號產生器，不是詐欺定罪器。輸出必須和其他特徵、規則、模型與人工審查交叉驗證；不得單獨用於拒絕服務或處分使用者。
